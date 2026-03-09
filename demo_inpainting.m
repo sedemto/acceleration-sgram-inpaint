@@ -37,19 +37,34 @@ N = size(spectrogram,2);
 
 restricted = spectrogram(:,q:Q);
 
-%% compare the difference of both sgrams after proj onto consistent sgrams
-sgram_sig = frsyn(Fr,framenative2coef(Fr,spectrogram));
-projection_sgram = framecoef2native(Fr,frana(Fr,sgram_sig));
+%% spectrogram inpainting reconstruction comparison
 
-restriction_sig = frsyn(Fr,framenative2coef(Fr,restricted));
-projection_restricted =  framecoef2native(Fr,frana(Fr,restriction_sig));
+% setup fuctions for STFT and inverse STFT
+param.F = @(x) framecoef2native(Fr,frana(Fr, x));
+param.F_adj = @(z) frsyn(Fr,framenative2coef(Fr,z));
 
-% calculate the MSE in the useful region of original and restricted sgram
-ref = projection_sgram(:,p:P);
-pred = projection_restricted(:,U:V);
-MSE_useful_region = mean(abs((ref(:)-pred(:)).^2));
+% settings for generalized Chambolle-Pock algorithm
+paramsolver.tau = 1;  % step size
+paramsolver.sigma = 1;  % step size
+paramsolver.eta = 1; % step size
+paramsolver.alpha = 1;  % relaxation parameter
+paramsolver.lambda = 0.1; % threshold (regularization parameter)
+paramsolver.I = 500; % number of iterations
 
-disp("MSE in useful region: "+MSE_useful_region);
+
+% get reconstruction of original sgram
+solution_orig = inpaint(spectrogram, param, paramsolver);
+
+% get reconstruction of restricted sgram
+solution_restrict = inpaint(restricted, param, paramsolver);
+
+%
+ref = solution_orig(:,p:P);
+pred = solution_restrict(:,U:V);
+MSE = mean(abs((ref(:)-pred(:)).^2));
+
+difference = ref-pred;
+disp("MSE between the two reconstructions: "+MSE);
 
 %% test shorter region
 % test if q and Q is 1 shorter
@@ -67,12 +82,12 @@ V_new = U_new+P-p;
 
 new_restriction = spectrogram(:,q_shorter:Q_shorter);
 
-% projection onto consistent sgram
-new_restriction_sig = frsyn(Fr,framenative2coef(Fr,new_restriction));
-projection_new_restricted =  framecoef2native(Fr,frana(Fr,new_restriction_sig));
+% get reconstruction of restricted sgram
+solution_new_restrict = inpaint(new_restriction, param, paramsolver);
 
 % calculate the MSE in the new useful region defined by shorter q
-pred_new = projection_new_restricted(:,U_new:V_new);
-MSE_shorter_restriction = mean(abs((ref(:)-pred_new(:)).^2));
+pred_new = solution_new_restrict(:,U_new:V_new);
 
+MSE_shorter_restriction = mean(abs((ref(:)-pred_new(:)).^2));
+diff2 = ref-pred_new;
 disp("MSE of shorter restriction: "+MSE_shorter_restriction);
