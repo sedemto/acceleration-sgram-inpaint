@@ -1,12 +1,12 @@
-function [q,Q,p,P,S,F,u,v,U,V,L] = min_sgram_supp(w,a,M,s,f,N, phasetype)
-% Find the suboptimal/minimum support of spectrogram that still carries most information about the gap
+function [q,Q,p,P,S,F,u,v,U,V,L] = opt_sgram_supp(w,a,M,s,f,N, phasetype)
+% Find the optimal support of spectrogram that still carries all info about the gap
 %
-%   Usage: [q,Q] = min_sgram_supp(w,a,M,s,f,N,phasetype);
+%   Usage: [q,Q] = opt_sgram_supp(w,a,M,s,f,N,phasetype);
 %          computes the first and last index of spectrogram needed for
 %          reconstruction
 %
 %
-%          [q,Q,p,P,S,F,u,v,U,V,L] = min_sgram_supp(w,a,M,s,f,N,phasetype);
+%          [q,Q,p,P,S,F,u,v,U,V,L] = opt_sgram_supp(w,a,M,s,f,N,phasetype);
 %
 %
 %   Input parameters:
@@ -43,10 +43,10 @@ p = s-w/a+1;
 P = f+w/a-1;
 
 % first index of the shortened part
-q = p;
+q = p-w/a+1;
 
 % last index of the shortened part
-Q = P;
+Q = P+w/a-1;
 
 % if phasetype is 'freqinv' move q to correct position
 if (phasetype=='freqinv')

@@ -31,25 +31,25 @@ f = 111; % gap finish
 
 spectrogram(:,s:f) = 0;
 
-%% shortened spectrogram
+%% get shortened spectrogram
 N = size(spectrogram,2);
-[q,Q,p,P,S,F,u,v,U,V,L] = min_sgram_supp(w,a,M,s,f,N,phasetype);
+[q,Q,p,P,S,F,u,v,U,V,L] = opt_sgram_supp(w,a,M,s,f,N,phasetype);
 
 restricted = spectrogram(:,q:Q);
 
-%% compare the difference of both sgrams after proj onto consistent sgrams
+%% compare both sgrams after projection onto consistent sgram
 sgram_sig = frsyn(Fr,framenative2coef(Fr,spectrogram));
 projection_sgram = framecoef2native(Fr,frana(Fr,sgram_sig));
 
 restriction_sig = frsyn(Fr,framenative2coef(Fr,restricted));
 projection_restricted =  framecoef2native(Fr,frana(Fr,restriction_sig));
 
-% calculate the MSE in the useful region of original and restricted sgram
+% calculate the SNR between the useful region of original and restricted sgram
 ref = projection_sgram(:,p:P);
 pred = projection_restricted(:,U:V);
-MSE_useful_region = mean(abs((ref(:)-pred(:)).^2));
+SNR_useful_region = snr(ref, ref-pred);
 
-disp("MSE in useful region: "+MSE_useful_region);
+disp("SNR in useful regions: "+SNR_useful_region);
 
 %% test shorter region
 % test if q and Q is 1 shorter
@@ -71,8 +71,8 @@ new_restriction = spectrogram(:,q_shorter:Q_shorter);
 new_restriction_sig = frsyn(Fr,framenative2coef(Fr,new_restriction));
 projection_new_restricted =  framecoef2native(Fr,frana(Fr,new_restriction_sig));
 
-% calculate the MSE in the new useful region defined by shorter q
+% calculate the SNR using new useful region defined by shorter q
 pred_new = projection_new_restricted(:,U_new:V_new);
-MSE_shorter_restriction = mean(abs((ref(:)-pred_new(:)).^2));
+SNR_shorter_restriction = snr(ref, ref-pred_new);
 
-disp("MSE of shorter restriction: "+MSE_shorter_restriction);
+disp("SNR using shorter restriction: "+SNR_shorter_restriction);
